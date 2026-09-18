@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ansh Legal — AI Regulatory Advisor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:        #0E1C30;
+    --ink-2:      #16283F;
+    --ink-3:      #223752;
+    --paper:      #F6F3EC;
+    --paper-2:    #FFFFFF;
+    --paper-3:    #ECE7DB;
+    --brass:      #A9822C;
+    --brass-light:#C9A45C;
+    --brass-dim:  rgba(169,130,44,0.16);
+    --text-main:  #1B2330;
+    --text-soft:  #5B6373;
+    --text-onink: #E9ECF2;
+    --text-onink-soft: #9AA6B8;
+    --bubble-user-bg: var(--ink);
+    --bubble-user-text: #F3F1E9;
+    --bubble-ai-bg: #FFFFFF;
+    --bubble-ai-border: #E4DFD0;
+    --line: #DFD9C8;
+    --danger: #9C3B2E;
+    --shadow: 0 10px 30px rgba(14,28,48,0.08);
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --paper:      #0B1220;
+      --paper-2:    #121C2C;
+      --paper-3:    #17233590;
+      --text-main:  #E7E9EE;
+      --text-soft:  #9AA5B6;
+      --bubble-ai-bg: #121C2C;
+      --bubble-ai-border: #253248;
+      --bubble-user-bg: #C9A45C;
+      --bubble-user-text: #16233A;
+      --line: #253248;
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:      #0B1220;
+    --paper-2:    #121C2C;
+    --paper-3:    #17233590;
+    --text-main:  #E7E9EE;
+    --text-soft:  #9AA5B6;
+    --bubble-ai-bg: #121C2C;
+    --bubble-ai-border: #253248;
+    --bubble-user-bg: #C9A45C;
+    --bubble-user-text: #16233A;
+    --line: #253248;
+    --shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--paper);
+    color: var(--text-main);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: 'Fraunces', Georgia, serif; }
+
+  .app {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* ---------- LEFT RAIL ---------- */
+  .rail {
+    background: var(--ink);
+    color: var(--text-onink);
+    display: flex;
+    flex-direction: column;
+    padding: 32px 28px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .rail::before {
+    content: "";
+    position: absolute;
+    top: -140px; right: -140px;
+    width: 320px; height: 320px;
+    border: 1px solid rgba(201,164,92,0.14);
+    border-radius: 50%;
+  }
+  .rail::after {
+    content: "";
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    border: 1px solid rgba(201,164,92,0.09);
+    border-radius: 50%;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .brand-mark {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(155deg, var(--brass-light), var(--brass));
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .brand-mark svg { width: 20px; height: 20px; }
+  .brand-word { line-height: 1.05; }
+  .brand-word .name { font-size: 21px; font-weight: 500; letter-spacing: 0.01em; }
+  .brand-word .sub { font-size: 10.5px; letter-spacing: 0.16em; color: var(--brass-light); text-transform: uppercase; margin-top: 3px; }
+  .brand-logo-pill {
+    background: #FFFFFF;
+    border-radius: 10px;
+    padding: 10px 16px;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .brand-logo-pill img { display: block; height: 30px; width: auto; }
+
+  .advisor-card {
+    margin-top: 40px;
+    position: relative; z-index: 1;
+  }
+  .advisor-avatar {
+    width: 58px; height: 58px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, #2A3E5C, #16283F);
+    border: 1px solid rgba(201,164,92,0.35);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+  }
+  .advisor-avatar svg { width: 26px; height: 26px; }
+  .advisor-card h1 {
+    font-size: 22px;
+    font-weight: 500;
+    margin: 0 0 6px;
+    line-height: 1.25;
+  }
+  .advisor-card p.role {
+    font-size: 13.5px;
+    color: var(--text-onink-soft);
+    margin: 0 0 4px;
+    line-height: 1.5;
+  }
+  .status-line {
+    display: flex; align-items: center; gap: 7px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-onink-soft);
+  }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #5FBE8A;
+    box-shadow: 0 0 0 3px rgba(95,190,138,0.18);
+  }
+
+  .rail-section-label {
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-onink-soft);
+    margin: 34px 0 12px;
+    position: relative; z-index: 1;
+  }
+  .chip-grid {
+    display: flex; flex-wrap: wrap; gap: 7px;
+    position: relative; z-index: 1;
+  }
+  .chip {
+    font-size: 12px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(201,164,92,0.3);
+    color: #DCC98E;
+    background: rgba(201,164,92,0.07);
+  }
+
+  .rail-spacer { flex: 1; }
+
+  .new-convo-btn {
+    position: relative; z-index: 1;
+    margin-top: 28px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(233,236,242,0.18);
+    background: transparent;
+    color: var(--text-onink);
+    font-family: inherit; font-size: 13.5px; font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .new-convo-btn:hover { background: rgba(233,236,242,0.06); border-color: rgba(233,236,242,0.32); }
+  .new-convo-btn svg { width: 15px; height: 15px; }
+
+  .rail-disclaimer {
+    position: relative; z-index: 1;
+    margin-top: 18px;
+    font-size: 11px;
+    line-height: 1.55;
+    color: var(--text-onink-soft);
+    padding-top: 16px;
+    border-top: 1px solid rgba(233,236,242,0.1);
+  }
+  .rail-disclaimer strong { color: #C4CCD9; font-weight: 600; }
+
+  .rail-toggle {
+    display: none;
+  }
+
+  /* ---------- RIGHT: CHAT ---------- */
+  .chat-col {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--paper);
+    min-width: 0;
+  }
+  .chat-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 34px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper-2);
+    flex-shrink: 0;
+  }
+  .chat-header .htitle { display: flex; flex-direction: column; }
+  .chat-header .htitle .t1 { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; }
+  .chat-header .htitle .t2 { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+  .mobile-menu-btn {
+    display: none;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--paper-2);
+    align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px 0 20px;
+  }
+  .messages-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 34px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .msg-row { display: flex; gap: 12px; max-width: 100%; }
+  .msg-row.user { justify-content: flex-end; }
+  .msg-row.ai { justify-content: flex-start; }
+
+  .msg-avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--ink);
+    margin-top: 2px;
+  }
+  .msg-avatar svg { width: 14px; height: 14px; }
+
+  .msg-block { display: flex; flex-direction: column; max-width: 78%; }
+  .msg-row.user .msg-block { align-items: flex-end; }
+  .msg-row.ai .msg-block { align-items: flex-start; }
+
+  .bubble {
+    padding: 13px 16px;
+    border-radius: 14px;
+    font-size: 14.5px;
+    line-height: 1.62;
+  }
+  .msg-row.ai .bubble {
+    background: var(--bubble-ai-bg);
+    border: 1px solid var(--bubble-ai-border);
+    border-top-left-radius: 4px;
+    color: var(--text-main);
+    box-shadow: var(--shadow);
+  }
+  .msg-row.user .bubble {
+    background: var(--bubble-user-bg);
+    color: var(--bubble-user-text);
+    border-top-right-radius: 4px;
+  }
+  .bubble p { margin: 0 0 10px; }
+  .bubble p:last-child { margin-bottom: 0; }
+
+  .msg-time {
+    font-size: 10.5px;
+    color: var(--text-soft);
+    margin-top: 5px;
+    padding: 0 4px;
+  }
+
+  .consult-inline {
+    margin-top: 12px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px;
+    border-radius: 11px;
+    background: var(--brass-dim);
+    border: 1px solid rgba(169,130,44,0.3);
+  }
+  .consult-inline span { font-size: 13px; font-weight: 500; color: var(--brass); flex: 1; }
+  .consult-inline button {
+    font-family: inherit; font-size: 12.5px; font-weight: 600;
+    padding: 8px 14px; border-radius: 8px;
+    border: none; background: var(--brass); color: #FFF8EC;
+    cursor: pointer; white-space: nowrap;
+  }
+  .consult-inline button:hover { background: var(--brass-light); }
+
+  .typing-row .bubble {
+    display: flex; align-items: center; gap: 5px;
+    padding: 15px 18px;
+  }
+  .typing-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-soft);
+    animation: bounce 1.3s infinite ease-in-out;
+  }
+  .typing-dot:nth-child(2) { animation-delay: .15s; }
+  .typing-dot:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce { 0%,60%,100%{ transform: translateY(0); opacity:.5;} 30%{ transform: translateY(-4px); opacity:1;} }
+
+  .composer-wrap {
+    border-top: 1px solid var(--line);
+    background: var(--paper-2);
+    padding: 16px 34px 20px;
+    flex-shrink: 0;
+  }
+  .composer {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 8px 8px 8px 16px;
+    transition: border-color .15s ease;
+  }
+  .composer:focus-within { border-color: var(--brass); }
+  .composer textarea {
+    flex: 1;
+    border: none; outline: none; resize: none;
+    background: transparent;
+    font-family: inherit; font-size: 14.5px; line-height: 1.5;
+    color: var(--text-main);
+    max-height: 140px;
+    padding: 9px 0;
+  }
+  .composer textarea::placeholder { color: var(--text-soft); }
+
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: none; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .mic-btn { background: transparent; color: var(--text-soft); }
+  .mic-btn:hover { background: var(--paper-3); }
+  .mic-btn.listening { background: var(--danger); color: #fff; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(156,59,46,.4);} 70%{box-shadow:0 0 0 9px rgba(156,59,46,0);} 100%{box-shadow:0 0 0 0 rgba(156,59,46,0);} }
+  .send-btn { background: var(--ink); color: #F3F1E9; }
+  .send-btn:hover { background: var(--ink-3); }
+  .send-btn:disabled { opacity: .35; cursor: default; }
+  .icon-btn svg { width: 17px; height: 17px; }
+
+  .composer-foot {
+    max-width: 720px; margin: 10px auto 0;
+    font-size: 11px; color: var(--text-soft);
+    text-align: center;
+  }
+
+  /* ---------- CONSULT MODAL ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(14,28,48,0.55);
+    display: none; align-items: center; justify-content: center;
+    z-index: 50; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--paper-2);
+    border-radius: 16px;
+    width: 100%; max-width: 420px;
+    padding: 28px 26px 24px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+  }
+  .modal h2 { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; margin: 0 0 6px; }
+  .modal p.lead { font-size: 13px; color: var(--text-soft); margin: 0 0 20px; line-height: 1.5; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-main); }
+  .field input, .field textarea {
+    width: 100%; font-family: inherit; font-size: 14px;
+    padding: 10px 12px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--paper);
+    color: var(--text-main); outline: none;
+  }
+  .field input:focus, .field textarea:focus { border-color: var(--brass); }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .btn-secondary, .btn-primary {
+    flex: 1; padding: 11px; border-radius: 9px; font-family: inherit;
+    font-size: 13.5px; font-weight: 600; cursor: pointer; border: none;
+  }
+  .btn-secondary { background: transparent; border: 1px solid var(--line); color: var(--text-main); }
+  .btn-primary { background: var(--brass); color: #FFF8EC; }
+  .btn-primary:hover { background: var(--brass-light); }
+  .modal-success { text-align: center; padding: 10px 0 4px; }
+  .modal-success svg { width: 42px; height: 42px; color: #5FBE8A; margin-bottom: 12px; }
+  .modal-success h2 { margin-bottom: 8px; }
+  .modal-success p { font-size: 13.5px; color: var(--text-soft); line-height: 1.6; }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; }
+    .rail {
+      position: fixed; inset: 0 20% 0 0;
+      z-index: 40;
+      transform: translateX(-105%);
+      transition: transform .25s ease;
+      width: 80vw; max-width: 320px;
+    }
+    .rail.open { transform: translateX(0); box-shadow: 20px 0 40px rgba(0,0,0,0.3); }
+    .mobile-menu-btn { display: flex; }
+    .chat-header { padding: 16px 18px; }
+    .messages-inner { padding: 0 18px; }
+    .composer-wrap { padding: 12px 14px 16px; }
+    .msg-block { max-width: 88%; }
+    .rail-backdrop {
+      display: none;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 39;
+    }
+    .rail-backdrop.open { display: block; }
+  }
+  @media (min-width: 861px) {
+    .rail-backdrop { display: none !important; }
+  }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="rail-backdrop" id="railBackdrop"></div>
+
+  <!-- LEFT RAIL -->
+  <aside class="rail" id="rail">
+    <div class="brand">
+      <div class="brand-logo-pill">
+        <img src="data:image/png;base64,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" alt="Ansh Legal">
+      </div>
+    </div>
+    <div class="sub" style="margin-top:10px; margin-left:2px; position:relative; z-index:1;">Regulatory &amp; Corporate Advisory</div>
+
+    <div class="advisor-card">
+      <div class="advisor-avatar">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L3 6v5c0 5.2 3.8 9.7 9 11 5.2-1.3 9-5.8 9-11V6l-9-4z" stroke="#C9A45C" stroke-width="1.4" stroke-linejoin="round"/><path d="M8.5 12l2.3 2.3L15.7 9" stroke="#C9A45C" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h1 class="serif">AI Regulatory Advisor</h1>
+      <p class="role">Trained on Ansh Legal's practice in ADGM, DIFC and cross-border advisory.</p>
+      <div class="status-line"><span class="status-dot"></span> Available now</div>
+    </div>
+
+    <div class="rail-section-label">Areas of guidance</div>
+    <div class="chip-grid">
+      <span class="chip">ADGM</span>
+      <span class="chip">DIFC</span>
+      <span class="chip">FSRA</span>
+      <span class="chip">DFSA</span>
+      <span class="chip">Fintech</span>
+      <span class="chip">Investment Funds</span>
+      <span class="chip">M&amp;A</span>
+      <span class="chip">UAE–India</span>
+      <span class="chip">Family Offices</span>
+      <span class="chip">Disputes</span>
+    </div>
+
+    <div class="rail-spacer"></div>
+
+    <button class="new-convo-btn" id="newConvoBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      New conversation
+    </button>
+
+    <div class="rail-disclaimer">
+      <strong>Please note:</strong> AI-generated information is for general guidance only and does not constitute legal advice. Please consult an Ansh Legal professional for advice specific to your circumstances.
+    </div>
+  </aside>
+
+  <!-- CHAT -->
+  <div class="chat-col">
+    <div class="chat-header">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="mobile-menu-btn" id="menuBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="htitle">
+          <div class="t1 serif">Ansh Legal AI Advisor</div>
+          <div class="t2">Ask anything about ADGM, DIFC, licensing, structuring or cross-border matters</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="messages-inner" id="messagesInner"></div>
+    </div>
+
+    <div class="composer-wrap">
+      <div class="composer">
+        <textarea id="textInput" placeholder="Type your question naturally — e.g. “We’re a fintech in India looking to expand to the UAE…”" rows="1"></textarea>
+        <button class="icon-btn mic-btn" id="micBtn" title="Voice input (demo)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3"/></svg>
+        </button>
+        <button class="icon-btn send-btn" id="sendBtn" disabled title="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+      <div class="composer-foot">Ansh Legal AI Advisor can make mistakes. Guidance is general in nature — always confirm specifics with our team.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONSULT MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalBody">
+    <h2 class="serif">Request a Consultation</h2>
+    <p class="lead">Share a few details and an Ansh Legal advisor will follow up — typically within one business day.</p>
+    <div class="field"><label>Full name</label><input type="text" id="fName" placeholder="Your name"></div>
+    <div class="field"><label>Email</label><input type="email" id="fEmail" placeholder="you@company.com"></div>
+    <div class="field"><label>Company</label><input type="text" id="fCompany" placeholder="Company name"></div>
+    <div class="field"><label>Brief requirement</label><textarea id="fReq" placeholder="A short summary of what you'd like help with"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="modalCancel">Cancel</button>
+      <button class="btn-primary" id="modalSubmit">Submit request</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const messagesEl = document.getElementById('messagesInner');
+  const scrollEl = document.getElementById('messages');
+  const input = document.getElementById('textInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const micBtn = document.getElementById('micBtn');
+  const rail = document.getElementById('rail');
+  const railBackdrop = document.getElementById('railBackdrop');
+
+  let msgCount = 0;
+  let consultOffered = false;
+  const memory = { sector: null, origin: null, jurisdiction: null, activity: null, topicsHit: {} };
+
+  const ICON_AI = `<svg viewBox="0 0 24 24" fill="none"><path d="M12 2L3 6v5c0 5.2 3.8 9.7 9 11 5.2-1.3 9-5.8 9-11V6l-9-4z" stroke="#C9A45C" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.5 12l2.3 2.3L15.7 9" stroke="#C9A45C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  function timeNow(){
+    const d = new Date();
+    let h = d.getHours(), m = d.getMinutes();
+    const ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if(h===0) h = 12;
+    return h + ':' + String(m).padStart(2,'0') + ' ' + ap;
+  }
+
+  function scrollBottom(){ scrollEl.scrollTop = scrollEl.scrollHeight; }
+
+  function addMessage(role, html, opts){
+    opts = opts || {};
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + role;
+    let avatar = '';
+    if(role === 'ai'){
+      avatar = `<div class="msg-avatar">${ICON_AI}</div>`;
+    }
+    row.innerHTML = `
+      ${avatar}
+      <div class="msg-block">
+        <div class="bubble">${html}</div>
+        <div class="msg-time">${timeNow()}</div>
+      </div>
+    `;
+    messagesEl.appendChild(row);
+    scrollBottom();
+    return row;
+  }
+
+  function addConsultCard(afterRow){
+    const card = document.createElement('div');
+    card.className = 'consult-inline';
+    card.innerHTML = `<span>Would you like to speak with an Ansh Legal advisor about this?</span><button>Request consultation</button>`;
+    card.querySelector('button').addEventListener('click', openModal);
+    afterRow.querySelector('.msg-block').appendChild(card);
+    scrollBottom();
+  }
+
+  function showTyping(cb){
+    const row = document.createElement('div');
+    row.className = 'msg-row ai typing-row';
+    row.innerHTML = `<div class="msg-avatar">${ICON_AI}</div><div class="msg-block"><div class="bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div>`;
+    messagesEl.appendChild(row);
+    scrollBottom();
+    const delay = 700 + Math.random()*700;
+    setTimeout(() => { row.remove(); cb(); }, delay);
+  }
+
+  /* ---------------- KNOWLEDGE / RESPONSE ENGINE ---------------- */
+
+  const TOPICS = [
+    {
+      id: 'adgm_difc_compare',
+      kw: ['adgm vs difc','difc vs adgm','which jurisdiction','which is better','compare adgm','compare difc','difference between adgm','adgm or difc','which one should'],
+      replies: [
+        `Good question — and it's one of the most common we hear. ADGM (Abu Dhabi Global Market) and DIFC (Dubai International Financial Centre) are both common-law financial free zones with their own regulators — FSRA at ADGM and DFSA at DIFC. The right fit usually comes down to your business model, target licence category, cost base, and where your clients and investors are based, rather than one being universally "better."`,
+        `That comparison comes up in almost every first conversation. Both ADGM and DIFC offer common-law frameworks and independent regulators (FSRA and DFSA respectively), but licensing timelines, fee structures, and regulatory appetite for certain activities can differ meaningfully depending on what you're doing.`
+      ],
+      follow: [
+        `To point you in the right direction — what kind of activity are you planning: fintech, an investment fund, advisory services, or something else?`,
+        `Can you tell me a bit more about the activity you'd be carrying out, so I can narrow this down properly?`
+      ]
+    },
+    {
+      id: 'fintech',
+      kw: ['fintech','payment','crypto','digital asset','virtual asset','neobank','lending platform','payment gateway','digital wallet','blockchain'],
+      replies: [
+        `Understood — fintech expansion into the UAE is a significant part of our practice. Depending on what you're offering (payments, lending, digital assets, or investment-related services), you'd typically be looking at either an ADGM licence under FSRA or a DIFC licence under DFSA. Activities that touch investment advice, dealing, or custody usually require a regulated financial services licence rather than a simple commercial one.`,
+        `Fintech is one of our core areas — Ansh Legal regularly advises founders and financial institutions entering the UAE market. The regulatory path really depends on the specific activity: payment processing, digital assets, and investment-related fintech each sit under different rulebooks within FSRA or DFSA.`
+      ],
+      follow: [
+        `Could you describe the product a bit more — is this primarily payments, lending, digital assets, or does it involve any investment advisory or dealing activity?`,
+        `Is your fintech currently operating anywhere else, or would the UAE be your first regulated market?`
+      ]
+    },
+    {
+      id: 'mna',
+      kw: ['acquir','acquisition','merger','m&a','buy a company','buying a company','takeover','joint venture',' jv ','due diligence'],
+      replies: [
+        `That sounds like a corporate/M&A matter. Whether you're acquiring a UAE mainland company, an ADGM/DIFC entity, or a regulated business, the process typically involves due diligence, transaction structuring, regulatory approvals (if a licensed entity is involved), and drafting the share purchase or asset purchase agreements.`,
+        `Acquisitions in the UAE bring together corporate, commercial and — where the target is regulated — financial regulatory considerations. Ansh Legal handles the full lifecycle: due diligence, structuring, negotiation, and closing.`
+      ],
+      follow: [
+        `Is the target company regulated (e.g. holds an FSRA or DFSA licence), or is this a standard mainland/free zone commercial entity?`,
+        `Where is the target based, and roughly what stage are you at — early discussions, term sheet, or already in due diligence?`
+      ]
+    },
+    {
+      id: 'formation',
+      kw: ['set up a company','setting up','incorporate','incorporation','company formation','register a company','open an office','branch office','subsidiary','entity setup','establish a company'],
+      replies: [
+        `Setting up in the UAE involves choosing the right structure first — mainland, a commercial free zone, or a financial free zone like ADGM or DIFC — and that choice shapes everything from licensing to ownership rules to tax treatment. Ansh Legal advises on jurisdiction selection and handles the structuring and licensing process end to end.`,
+        `Company formation questions usually start with one thing: what will the entity actually do? A holding company, an operating business, and a regulated financial services entity all follow different paths, even though they might all land in ADGM or DIFC.`
+      ],
+      follow: [
+        `What will this new entity be doing day-to-day — is it an operating business, a holding structure, or something regulated like financial services?`,
+        `Do you already have a jurisdiction in mind, or would you like help weighing the options first?`
+      ]
+    },
+    {
+      id: 'funds',
+      kw: ['investment fund','fund manager','fund management','asset management','investment adviser','portfolio manager','private equity','venture capital fund','hedge fund'],
+      replies: [
+        `Launching a fund or acting as an investment manager/adviser in the UAE typically means a Category 3A or 3C licence (for managing/advising) at ADGM, or the equivalent DFSA categorisation at DIFC, depending on your activities and client base. Ansh Legal advises fund managers and family offices on structuring, licensing and ongoing regulatory compliance.`,
+        `Funds and investment managers are a core part of what we do. The right structure depends on whether you're raising a fund, managing discretionary portfolios, or purely advising — each carries a different regulatory category.`
+      ],
+      follow: [
+        `Are you looking to launch a fund vehicle itself, act as the manager/adviser, or both?`,
+        `Roughly how would you describe your target investors — institutional, high-net-worth individuals, or a mix?`
+      ]
+    },
+    {
+      id: 'licensing',
+      kw: ['licen','fsra','dfsa','regulated activity','regulatory approval','authorisation','authorization','financial services permission'],
+      replies: [
+        `Financial services licensing in the UAE runs through FSRA at ADGM or DFSA at DIFC. The process generally involves an initial assessment of your activity category, a business plan and financial projections, fit-and-proper checks on controllers and senior management, and then the formal application. Timelines vary by category but usually run a few months.`,
+        `Licensing is where most of our regulatory work sits. FSRA and DFSA each publish detailed rulebooks by activity type, and getting the category right from the outset avoids costly restructuring later.`
+      ],
+      follow: [
+        `What activity are you looking to get licensed for, and do you have a sense of which regulator — FSRA or DFSA — you're leaning toward?`,
+        `Is this a brand-new licence application, or are you looking to vary/expand an existing one?`
+      ]
+    },
+    {
+      id: 'india_uae',
+      kw: ['india','indian','bharat'],
+      replies: [
+        `UAE–India cross-border work is one of Ansh Legal's specialisms — we regularly advise Indian founders, financial institutions and family businesses on establishing a UAE presence, whether that's a holding company, a regulated entity, or a straightforward market-entry structure.`,
+        `We work closely with Indian businesses expanding into the UAE. The considerations usually span corporate structuring, regulatory licensing (if relevant), and practical points like banking, substance requirements, and repatriation of funds.`
+      ],
+      follow: [
+        `What does the Indian side of the business currently look like — and what's driving the move into the UAE?`,
+        `Would this be a fully new UAE entity, or more of a holding/group restructuring exercise?`
+      ]
+    },
+    {
+      id: 'family_office',
+      kw: ['family office','succession','wealth structuring','trust','estate planning','private client','next generation','legacy planning'],
+      replies: [
+        `Family office and private client work is a significant part of our practice — structuring investment holding companies, succession and governance arrangements, and wealth structures within ADGM and DIFC's private client frameworks.`,
+        `For family offices, the priorities are usually asset protection, succession planning, and governance that will hold up across generations. ADGM and DIFC both offer purpose-built foundations and private client structures for this.`
+      ],
+      follow: [
+        `Is the focus more on setting up a family office entity itself, or on structuring specific assets (property, investments, operating businesses) underneath it?`,
+        `Are there succession or next-generation considerations you're planning around already?`
+      ]
+    },
+    {
+      id: 'governance',
+      kw: ['governance','board structure','compliance framework','policies and procedures','internal controls','compliance officer','risk framework'],
+      replies: [
+        `Corporate governance and compliance frameworks matter most once a licence is in place — regulators expect clear board oversight, documented policies, and a designated compliance function proportionate to the size and risk of the business.`,
+        `We help licensed and pre-licensing businesses build out governance and compliance frameworks — board composition, committee structures, and the policy suite regulators expect to see (AML, risk management, conduct, outsourcing).`
+      ],
+      follow: [
+        `Is this for a business that's already licensed, or are you building the governance framework as part of a new licence application?`,
+        `Which area is the priority right now — board structure, AML/compliance policies, or general internal controls?`
+      ]
+    },
+    {
+      id: 'dispute',
+      kw: ['dispute','arbitration','litigation','breach of contract','claim against','sue','legal action','conflict with','shareholder dispute'],
+      replies: [
+        `Sorry to hear you're dealing with a dispute. Ansh Legal advises on commercial disputes and arbitration across UAE and cross-border matters — the right approach depends heavily on what's in your governing contracts (governing law, dispute resolution clause, jurisdiction) and the specifics of the dispute itself.`,
+        `Disputes need a careful read of the underlying agreements first — particularly the governing law and dispute resolution clauses — before deciding between negotiation, arbitration, or court proceedings.`
+      ],
+      follow: [
+        `Is there a specific contract or agreement involved, and does it specify arbitration or a particular court's jurisdiction?`,
+        `Roughly what's the nature of the dispute — a commercial contract, a shareholder matter, or something else?`
+      ]
+    },
+    {
+      id: 'financing',
+      kw: ['financing','loan agreement','debt facility','capital raise','term sheet','convertible note','shareholder agreement','investment round'],
+      replies: [
+        `Financing and transaction work spans debt facilities, capital raises, and the agreements underpinning them — term sheets, loan documentation, security, and shareholder arrangements. Ansh Legal drafts and negotiates these across UAE and cross-border deals.`,
+        `Happy to help think this through. Financing transactions usually turn on structure (debt vs. equity vs. convertible), the governing law of the documents, and how any security is perfected — all of which we handle regularly.`
+      ],
+      follow: [
+        `Is this financing on the debt side, equity/investment side, or a hybrid like a convertible instrument?`,
+        `Do you already have a term sheet in place, or are you at an earlier stage?`
+      ]
+    },
+    {
+      id: 'greeting',
+      kw: ['hello','hi ','hi there','hey','good morning','good afternoon','good evening','hii','assalam','namaste'],
+      replies: [
+        `Hello, and welcome to Ansh Legal. I'm here to help you think through legal, regulatory or corporate questions relating to the UAE — including ADGM, DIFC, fintech, funds, and cross-border structuring. What's on your mind?`,
+        `Hi there — good to have you here. You can ask me anything about setting up, licensing, or operating a business in the UAE, in your own words. What would you like to explore?`
+      ],
+      follow: []
+    },
+    {
+      id: 'thanks',
+      kw: ['thank you','thanks','appreciate it','cheers'],
+      replies: [
+        `You're very welcome. If anything else comes up — even something loosely related — feel free to ask.`,
+        `Glad that was helpful. Happy to keep going if you have more questions, or we can arrange time with the team if you'd like to take this further.`
+      ],
+      follow: []
+    }
+  ];
+
+  const FALLBACKS = [
+    `That's a fair question, and I want to make sure I point you in the right direction rather than guess. Could you tell me a little more — is this related to setting up a business, a regulatory licence, a transaction, or something else?`,
+    `I want to give you something genuinely useful here rather than a generic answer. Could you say a bit more about the situation — what you're trying to achieve, and roughly which part of the business it touches?`
+  ];
+
+  const CONSULT_LINES = [
+    `This is the kind of matter where a short conversation with one of our advisors would help — they can give you specific, actionable guidance rather than general principles.`,
+    `At this point, it would genuinely help to bring in one of our advisors directly, so they can look at the specifics with you.`
+  ];
+
+  function updateMemory(text){
+    const t = text.toLowerCase();
+    if(/india|indian/.test(t)) memory.origin = 'India';
+    if(/uk\b|united kingdom|london/.test(t)) memory.origin = memory.origin || 'the UK';
+    if(/fintech|payment|crypto|digital asset/.test(t)) memory.sector = 'fintech';
+    if(/fund|asset management|portfolio/.test(t)) memory.sector = memory.sector || 'investment funds';
+    if(/family office|wealth|succession/.test(t)) memory.sector = memory.sector || 'family office';
+    if(/adgm/.test(t) && !/difc/.test(t)) memory.jurisdiction = 'ADGM';
+    if(/difc/.test(t) && !/adgm/.test(t)) memory.jurisdiction = 'DIFC';
+  }
+
+  function pickTopic(text){
+    const t = text.toLowerCase();
+    let best = null, bestScore = 0;
+    for(const topic of TOPICS){
+      let score = 0;
+      for(const k of topic.kw){
+        if(t.includes(k)) score += k.length; // longer/more specific match wins
+      }
+      if(score > bestScore){ bestScore = score; best = topic; }
+    }
+    return best;
+  }
+
+  function variant(topic, arr){
+    const hits = memory.topicsHit[topic.id] || 0;
+    memory.topicsHit[topic.id] = hits + 1;
+    return arr[Math.min(hits, arr.length - 1)];
+  }
+
+  function buildResponse(userText){
+    updateMemory(userText);
+    const topic = pickTopic(userText);
+    let reply, followUp = '', offerConsult = false;
+
+    if(!topic){
+      reply = FALLBACKS[Math.floor(Math.random()*FALLBACKS.length)];
+    } else if(topic.id === 'greeting' || topic.id === 'thanks'){
+      reply = variant(topic, topic.replies);
+    } else {
+      reply = variant(topic, topic.replies);
+      if(topic.follow.length){
+        followUp = variant({id: topic.id+'_f'}, topic.follow);
+      }
+      const substantiveHits = Object.keys(memory.topicsHit)
+        .filter(k => !k.endsWith('_f') && k !== 'greeting' && k !== 'thanks')
+        .reduce((sum,k)=> sum + memory.topicsHit[k], 0);
+      if(!consultOffered && substantiveHits >= 2){
+        offerConsult = true;
+      }
+    }
+
+    // explicit ask to speak to someone / cost / lawyer
+    const t = userText.toLowerCase();
+    if(!offerConsult && !consultOffered && /(speak to|talk to|connect me|book a|schedule a|consult|lawyer|advisor|advocate|call me|contact you|pricing|cost|fees)/.test(t)){
+      offerConsult = true;
+      if(!topic){ reply = `Of course — happy to connect you with the team.`; }
+    }
+
+    let html = `<p>${escapeHtml(reply)}</p>`;
+    if(followUp) html += `<p>${escapeHtml(followUp)}</p>`;
+    if(offerConsult){
+      html += `<p>${escapeHtml(CONSULT_LINES[Math.floor(Math.random()*CONSULT_LINES.length)])}</p>`;
+    }
+
+    return { html, offerConsult };
+  }
+
+  function escapeHtml(s){
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  /* ---------------- CHAT FLOW ---------------- */
+
+  function handleSend(){
+    const text = input.value.trim();
+    if(!text) return;
+    addMessage('user', escapeHtml(text));
+    input.value = '';
+    input.style.height = 'auto';
+    sendBtn.disabled = true;
+    msgCount++;
+
+    showTyping(() => {
+      const { html, offerConsult } = buildResponse(text);
+      const row = addMessage('ai', html);
+      if(offerConsult){
+        consultOffered = true;
+        addConsultCard(row);
+      }
+    });
+  }
+
+  sendBtn.addEventListener('click', handleSend);
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      handleSend();
+    }
+  });
+  input.addEventListener('input', () => {
+    sendBtn.disabled = input.value.trim().length === 0;
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+  });
+
+  micBtn.addEventListener('click', () => {
+    micBtn.classList.add('listening');
+    input.placeholder = 'Listening…';
+    setTimeout(() => {
+      micBtn.classList.remove('listening');
+      input.placeholder = 'Type your question naturally — e.g. “We’re a fintech in India looking to expand to the UAE…”';
+      input.focus();
+    }, 1800);
+  });
+
+  /* ---------------- RESET / MOBILE NAV ---------------- */
+
+  function initialGreeting(){
+    messagesEl.innerHTML = '';
+    msgCount = 0; consultOffered = false;
+    memory.sector = null; memory.origin = null; memory.jurisdiction = null; memory.topicsHit = {};
+    addMessage('ai', `<p>Hello, I'm the Ansh Legal AI Advisor. You can ask me anything, in your own words, about doing business in the UAE — company formation, ADGM or DIFC licensing, fintech and investment regulation, cross-border structuring, or resolving a dispute.</p><p>What would you like to talk through?</p>`);
+  }
+
+  document.getElementById('newConvoBtn').addEventListener('click', initialGreeting);
+
+  const menuBtn = document.getElementById('menuBtn');
+  menuBtn.addEventListener('click', () => { rail.classList.add('open'); railBackdrop.classList.add('open'); });
+  railBackdrop.addEventListener('click', () => { rail.classList.remove('open'); railBackdrop.classList.remove('open'); });
+
+  /* ---------------- CONSULTATION MODAL ---------------- */
+
+  const overlay = document.getElementById('modalOverlay');
+  const modalBody = document.getElementById('modalBody');
+
+  window.openModal = function(){
+    overlay.classList.add('open');
+  };
+  document.getElementById('modalCancel').addEventListener('click', () => overlay.classList.remove('open'));
+  overlay.addEventListener('click', (e) => { if(e.target === overlay) overlay.classList.remove('open'); });
+
+  document.getElementById('modalSubmit').addEventListener('click', () => {
+    const name = document.getElementById('fName').value.trim();
+    const email = document.getElementById('fEmail').value.trim();
+    if(!name || !email){
+      alert('Please provide your name and email so our team can reach you.');
+      return;
+    }
+    modalBody.innerHTML = `
+      <div class="modal-success">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5L16 9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h2 class="serif">Request received</h2>
+        <p>Thank you, ${escapeHtml(name)}. An Ansh Legal advisor will reach out to ${escapeHtml(email)} within one business day.</p>
+        <div class="modal-actions" style="margin-top:20px;">
+          <button class="btn-primary" style="flex:1;" id="modalClose">Close</button>
+        </div>
+      </div>`;
+    document.getElementById('modalClose').addEventListener('click', () => {
+      overlay.classList.remove('open');
+    });
+  });
+
+  /* init */
+  initialGreeting();
+})();
+</script>
+</body>
+</html>
